@@ -1,11 +1,17 @@
 """
 DocumentService — handles PDF ingestion.
 """
+import os
 import pdfplumber
 import io
 import asyncio
 from fastapi import UploadFile, HTTPException
 from app.services.embedding_service import EmbeddingService
+from app.services.faiss_service import FaissService
+from app.config import get_settings
+
+settings = get_settings()
+INDEX_PATH = settings.faiss_index_path + "/index.faiss"
 
 
 class DocumentService:
@@ -50,13 +56,22 @@ class DocumentService:
 
             embeddings = await asyncio.to_thread(EmbeddingService.embed_chunks, chunks)
 
+            # --- FAISS: load existing index or create new one ---
+            dim = len(embeddings[0])
+            if os.path.exists(INDEX_PATH):
+                index = FaissService.load_index()
+            else:
+                index = FaissService.create_index(dim)
+
+            result = FaissService.add_embeddings(index, embeddings, chunks)
+            FaissService.save_index(index)
+
             return {
                 "filename": file.filename,
                 "total_pages": len(extracted_pages),
                 "total_chunks": len(chunks),
-                "first_chunk_length": len(chunks[0]),
-                "chunks_preview": chunks[:2],
-                "embedding_dim": len(embeddings[0]),
+                "embedding_dim": dim,
+                "total_vectors_in_index": result["total_vectors"],
             }
 
         except Exception as e:

@@ -1,10 +1,11 @@
 """
 DocumentService — handles PDF ingestion.
-Step 1: Extract raw text only.
 """
 import pdfplumber
 import io
+import asyncio
 from fastapi import UploadFile, HTTPException
+from app.services.embedding_service import EmbeddingService
 
 
 class DocumentService:
@@ -43,12 +44,19 @@ class DocumentService:
                 chunks.append(full_text[start:end])
                 start += chunk_size - overlap
 
+            # --- Embeddings ---
+            if not chunks:
+                raise ValueError("No text chunks found. The PDF may be empty or unreadable.")
+
+            embeddings = await asyncio.to_thread(EmbeddingService.embed_chunks, chunks)
+
             return {
                 "filename": file.filename,
                 "total_pages": len(extracted_pages),
                 "total_chunks": len(chunks),
-                "first_chunk_length": len(chunks[0]) if chunks else 0,
+                "first_chunk_length": len(chunks[0]),
                 "chunks_preview": chunks[:2],
+                "embedding_dim": len(embeddings[0]),
             }
 
         except Exception as e:

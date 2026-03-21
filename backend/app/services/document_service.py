@@ -23,16 +23,32 @@ class DocumentService:
             extracted_pages = []
             with pdfplumber.open(io.BytesIO(contents)) as pdf:
                 for page in pdf.pages:
-                    text = page.extract_text() or ""
+                    text = page.extract_text()
                     if text:
                         extracted_pages.append(text)
 
             full_text = "\n".join(extracted_pages)
 
+            # --- Chunking ---
+            chunk_size = 500
+            overlap = 100
+
+            if overlap >= chunk_size:
+                raise ValueError(f"overlap ({overlap}) must be less than chunk_size ({chunk_size})")
+
+            chunks = []
+            start = 0
+            while start < len(full_text):
+                end = start + chunk_size
+                chunks.append(full_text[start:end])
+                start += chunk_size - overlap
+
             return {
                 "filename": file.filename,
                 "total_pages": len(extracted_pages),
-                "preview": full_text[:500],
+                "total_chunks": len(chunks),
+                "first_chunk_length": len(chunks[0]) if chunks else 0,
+                "chunks_preview": chunks[:2],
             }
 
         except Exception as e:

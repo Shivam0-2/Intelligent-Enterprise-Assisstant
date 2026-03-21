@@ -1,26 +1,45 @@
 """
-DocumentService — handles PDF ingestion for both admin (policy) and employee (personal) flows.
-Implementation will be added in the Document Processing step.
+DocumentService — handles PDF ingestion.
+Step 1: Extract raw text only.
 """
-from fastapi import UploadFile
-from sqlalchemy.orm import Session
+import pdfplumber
+import io
+from fastapi import UploadFile, HTTPException
 
 
 class DocumentService:
 
     @staticmethod
     async def process_policy_document(
-        file: UploadFile, uploader: dict, db: Session
+        file: UploadFile, uploader: dict, db
     ) -> dict:
         """
-        Admin flow (persistent):
-        1. Extract text from PDF
-        2. Chunk text into segments
-        3. Generate embeddings via EmbeddingService
-        4. Store vectors in FAISS
-        5. Save document record to SQLite
+        Reads the uploaded PDF and extracts raw text page by page.
+        Returns the full text and a short preview.
         """
-        raise NotImplementedError("DocumentService.process_policy_document — coming in Document step")
+        try:
+            contents = await file.read()
+
+            extracted_pages = []
+            with pdfplumber.open(io.BytesIO(contents)) as pdf:
+                for page in pdf.pages:
+                    text = page.extract_text() or ""
+                    if text:
+                        extracted_pages.append(text)
+
+            full_text = "\n".join(extracted_pages)
+
+            return {
+                "filename": file.filename,
+                "total_pages": len(extracted_pages),
+                "preview": full_text[:500],
+            }
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to extract text from PDF: {str(e)}"
+            )
 
     @staticmethod
     async def process_personal_document(file: UploadFile) -> dict:

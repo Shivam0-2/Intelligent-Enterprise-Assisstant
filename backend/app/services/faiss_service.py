@@ -60,7 +60,26 @@ class FaissService:
         faiss.write_index(index, INDEX_PATH)
 
     @staticmethod
-    def load_index() -> faiss.IndexFlatL2:
+    def search(index: faiss.IndexFlatL2, query_embedding: list[float], top_k: int = 5) -> list[str]:
+        """
+        Searches the index for top-k nearest vectors.
+        Returns the corresponding text chunks from chunks.json.
+        """
+        if not os.path.exists(CHUNKS_PATH):
+            raise FileNotFoundError("Chunk mapping not found. Upload documents first.")
+
+        with open(CHUNKS_PATH, "r") as f:
+            chunk_map = json.load(f)
+
+        query_vector = np.array(query_embedding, dtype=np.float32).reshape(1, -1)
+        _, indices = index.search(query_vector, top_k)
+
+        results = []
+        for i in indices[0]:
+            if i != -1 and str(i) in chunk_map:
+                results.append(chunk_map[str(i)])
+
+        return results
         """Loads the FAISS index from disk. Raises errors if directory or file not found."""
         index_dir = os.path.dirname(INDEX_PATH)
         if not os.path.exists(index_dir):

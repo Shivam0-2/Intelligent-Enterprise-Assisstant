@@ -1,0 +1,10 @@
+backend/venv/
+__pycache__/
+*.py[cod]
+
+.env
+*.db
+
+faiss_index/
+*.faiss
+*.json

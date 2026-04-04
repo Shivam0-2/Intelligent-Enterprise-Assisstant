@@ -60,6 +60,19 @@ class FaissService:
         faiss.write_index(index, INDEX_PATH)
 
     @staticmethod
+    def load_index() -> faiss.IndexFlatL2:
+        """Loads the FAISS index from disk."""
+        index_dir = os.path.dirname(INDEX_PATH)
+
+        if not os.path.exists(index_dir):
+            raise FileNotFoundError(f"FAISS index directory not found: {index_dir}")
+
+        if not os.path.exists(INDEX_PATH):
+            raise FileNotFoundError(f"No FAISS index found at {INDEX_PATH}")
+
+        return faiss.read_index(INDEX_PATH)
+
+    @staticmethod
     def search(index: faiss.IndexFlatL2, query_embedding: list[float], top_k: int = 5) -> list[str]:
         """
         Searches the index for top-k nearest vectors.
@@ -80,10 +93,4 @@ class FaissService:
                 results.append(chunk_map[str(i)])
 
         return results
-        """Loads the FAISS index from disk. Raises errors if directory or file not found."""
-        index_dir = os.path.dirname(INDEX_PATH)
-        if not os.path.exists(index_dir):
-            raise FileNotFoundError(f"FAISS index directory not found: {index_dir}")
-        if not os.path.exists(INDEX_PATH):
-            raise FileNotFoundError(f"No FAISS index found at {INDEX_PATH}")
-        return faiss.read_index(INDEX_PATH)
+        

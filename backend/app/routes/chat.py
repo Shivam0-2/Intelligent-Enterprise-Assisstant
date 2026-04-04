@@ -17,7 +17,6 @@ class QueryRequest(BaseModel):
 def handle_query(
     payload: QueryRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
 ):
     """
     Main RAG query endpoint:
@@ -32,5 +31,5 @@ def handle_query(
             detail="Your query contains inappropriate language.",
         )
 
-    answer = ChatService.process_query(query=payload.query, user=current_user)
+    answer = ChatService.process_query(query=payload.query, user=None)
     return {"query": payload.query, "answer": answer}

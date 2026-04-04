@@ -5,6 +5,7 @@ __pycache__/
 .env
 *.db
 
+backend/faiss_index/
 faiss_index/
 *.faiss
 *.json

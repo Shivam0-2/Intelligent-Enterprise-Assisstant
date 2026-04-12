@@ -4,9 +4,15 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # App
-    app_name: str = "IntelligentEnterpriseAssistant"
+    app_name: str = "Intelligent EnterpriseAssistant"
     debug: bool = True
     secret_key: str
+
+    hf_api_token: str | None = None
+    groq_api_key: str | None = None
+
+    class Config:
+        env_file = ".env"
 
     # Database
     database_url: str = "sqlite:///./enterprise_assistant.db"
@@ -20,9 +26,6 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_user: str
     smtp_password: str
-
-    # LLM
-    hf_api_token: str
     llm_model: str = "mistralai/Mistral-7B-Instruct-v0.1"
 
     # Embeddings

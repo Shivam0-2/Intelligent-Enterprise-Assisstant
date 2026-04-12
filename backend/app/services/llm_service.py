@@ -1,14 +1,10 @@
-from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
-from transformers import pipeline
+import os
+from groq import Groq
+from dotenv import load_dotenv
 
-pipe = pipeline(
-    task="text-generation",
-    model="distilgpt2",
-    max_new_tokens=150,
-    do_sample=False
-)
+load_dotenv()
 
-llm = HuggingFacePipeline(pipeline=pipe)
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
 class LLMService:
@@ -16,31 +12,30 @@ class LLMService:
     @staticmethod
     def generate_response(context: str, question: str) -> str:
         prompt = f"""
-Answer the question using ONLY the context below.
-
-If the answer is not clearly present, say: I don't know
-
-Give only 1 short sentence.
+Answer using ONLY the context below.
+If the answer is not present, say: I don't know.
 
 Context:
 {context}
 
 Question: {question}
-
-Final Answer:
+Answer:
 """
 
-        response = llm.invoke(prompt)
+        try:
+            completion = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=100
+            )
 
-        if isinstance(response, dict):
-            response = response.get("text", "")
+            answer = completion.choices[0].message.content.strip()
 
-        # 🔥 Clean output aggressively
-        response = response.split("Final Answer:")[-1]
-        response = response.strip()
+            return answer if answer else "I don't know"
 
-        # fallback
-        if not response or question.lower() in response.lower():
-            return "I don't know"
-
-        return response
+        except Exception as e:
+            print("LLM ERROR:", e)
+            return "Error generating response"

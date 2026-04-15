@@ -20,7 +20,7 @@ class ChatService:
                 "answer": "No documents indexed yet. Please ask an admin to upload documents first.",
             }
 
-        retrieved_chunks = FaissService.search(index, query_embedding, top_k=2)
+        retrieved_chunks = FaissService.search(index, query_embedding, top_k=5)
 
         context = "\n\n".join(retrieved_chunks)
         query_lower = query.lower()

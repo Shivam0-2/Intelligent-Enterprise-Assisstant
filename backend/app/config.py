@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     llm_model: str = "mistralai/Mistral-7B-Instruct-v0.1"
 
     # Embeddings
-    embedding_model: str = "all-MiniLM-L6-v2"
+    embedding_model: str = "sentence-transformers/all-mpnet-base-v2"
 
     # FAISS
     faiss_index_path: str = "./faiss_index"

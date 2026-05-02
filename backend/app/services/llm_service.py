@@ -12,17 +12,16 @@ class LLMService:
     @staticmethod
     def generate_response(context: str, question: str) -> str:
         prompt = f"""
-You are an enterprise assistant.
+You are an intelligent enterprise assistant.
 
-STRICT RULES:
-- Answer ONLY from the provided context
-- Do NOT add external knowledge
-- If answer is not found, say:
-  "This information is not available in the provided documents."
+Answer the user's question ONLY using the provided context.
 
-- Keep answers clear and concise
-- Do NOT repeat the question
-- Do NOT say "based on context"
+Guidelines:
+- If answer exists → explain clearly in simple human language
+- Do NOT copy text exactly → rephrase it
+- Be concise but helpful
+- If answer is not in context → say:
+  "This information is not available in company documents."
 
 Context:
 {context}

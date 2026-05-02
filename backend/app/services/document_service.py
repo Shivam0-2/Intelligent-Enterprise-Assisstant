@@ -95,4 +95,28 @@ class DocumentService:
 
     @staticmethod
     async def process_personal_document(file: UploadFile) -> dict:
-        raise NotImplementedError("Coming next")
+        try:
+            contents = await file.read()
+
+            extracted_text = []
+            with pdfplumber.open(io.BytesIO(contents)) as pdf:
+                for page in pdf.pages:
+                    text = page.extract_text()
+                    if text:
+                        extracted_text.append(text)
+
+            full_text = "\n".join(extracted_text)
+
+        # simple summary (temporary)
+            summary = full_text[:500]
+
+            return {
+                "filename": file.filename,
+                "summary": summary
+        }
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to process document: {str(e)}"
+        )

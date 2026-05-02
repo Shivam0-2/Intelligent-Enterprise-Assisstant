@@ -21,18 +21,14 @@ class OTPVerify(BaseModel):
 
 @router.post("/request-otp", status_code=status.HTTP_200_OK)
 def request_otp(payload: OTPRequest, db: Session = Depends(get_db)):
-    """
-    Step 1 of login: registers the user (if new) and sends a 6-digit OTP
-    to their email address.
-    """
     AuthService.send_otp(email=payload.email, db=db)
     return {"message": "OTP sent successfully. Check your email."}
 
 
 @router.post("/verify-otp", status_code=status.HTTP_200_OK)
 def verify_otp(payload: OTPVerify, db: Session = Depends(get_db)):
-    """
-    Step 2 of login: validates the OTP and returns a signed JWT on success.
-    """
-    token = AuthService.verify_otp(email=payload.email, otp=payload.otp, db=db)
-    return {"access_token": token, "token_type": "bearer"}
+    result = AuthService.verify_otp(email=payload.email, otp=payload.otp, db=db)
+    return {
+        "access_token": result["access_token"],
+        "token_type": "bearer",
+        "role": result["role"]}

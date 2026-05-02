@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    description="RAG-based Intelligent Enterprise Assistant",
+    description="Enterprise Assistant",
     version="1.0.0",
     lifespan=lifespan,
 )

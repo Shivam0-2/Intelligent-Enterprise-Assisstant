@@ -10,6 +10,7 @@ router = APIRouter(prefix="/documents", tags=["Documents"])
 @router.post("/upload/policy")
 async def upload_policy_document(
     file: UploadFile = File(...),
+    current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """
@@ -30,13 +31,11 @@ async def upload_personal_document(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user),
 ):
-    """
-    Employee uploads a personal PDF for temporary analysis only.
-    NOT stored in FAISS — text is sent directly to LLM for
-    summarization and keyword extraction.
-    """
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
 
     result = await DocumentService.process_personal_document(file=file)
-    return {"summary": result["summary"], "keywords": result["keywords"]}
+
+    return {
+        "summary": result["summary"]
+    }

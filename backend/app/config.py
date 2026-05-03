@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     debug: bool = True
     secret_key: str
 
+    ALLOW_ANY_EMAIL: bool = True
+    EMAIL_USER: str
+    EMAIL_PASSWORD: str
+
     hf_api_token: str | None = None
     groq_api_key: str | None = None
 
@@ -24,8 +28,8 @@ class Settings(BaseSettings):
     # Email / SMTP
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
-    smtp_user: str
-    smtp_password: str
+    EMAIL_USER: str
+    EMAIL_PASSWORD: str
     llm_model: str = "mistralai/Mistral-7B-Instruct-v0.1"
 
     # Embeddings

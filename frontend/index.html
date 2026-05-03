@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enterprise Assistant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="chat-page">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="logo-icon">✦</div>
+      Enterprise Assistant
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="document.getElementById('file-input').click()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Upload Doc
+      </button>
+      <input type="file" id="file-input" accept=".pdf" hidden onchange="uploadFile(this)" />
+      <button class="btn btn-danger" onclick="logout()">Sign out</button>
+    </div>
+  </header>
+
+  <div id="upload-status"></div>
+
+  <!-- Messages -->
+  <div class="messages" id="messages">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">✦</div>
+      <h3>How can I help you?</h3>
+      <p>Ask me anything about your company policies, HR documents, or IT guidelines.</p>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <div class="input-box">
+      <textarea
+        id="query-input"
+        rows="1"
+        placeholder="Message Enterprise Assistant..."
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"
+      ></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendQuery()">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+    <p class="input-hint">Enter to send &nbsp;·&nbsp; Shift+Enter for new line</p>
+  </div>
+
+  <script>
+    const API = "http://127.0.0.1:8000";
+    let uploadedContext = null;
+
+    // Auth guard
+    window.onload = () => {
+      if (!localStorage.getItem("token")) window.location.href = "login.html";
+    };
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      window.location.href = "login.html";
+    }
+
+    // ── Auto-resize textarea ──────────────────────────────────────────────
+    function autoResize(el) {
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 120) + "px";
+    }
+
+    function handleKey(e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendQuery();
+      }
+    }
+
+    // ── Chat ─────────────────────────────────────────────────────────────
+    async function sendQuery() {
+      const input = document.getElementById("query-input");
+      const btn   = document.getElementById("send-btn");
+      const query = input.value.trim();
+      if (!query) return;
+
+      const token = localStorage.getItem("token");
+
+      hideEmpty();
+      addMessage("You", query);
+      input.value        = "";
+      input.style.height = "auto";
+      input.disabled     = true;
+      btn.disabled       = true;
+
+      const loader = addMessage("AI", "Thinking...", true);
+
+      try {
+        const res = await fetch(`${API}/chat/query`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({
+            query: query, context: uploadedContext || null})
+        });
+
+        loader.remove();
+
+        if (!res.ok) { addMessage("AI", "Server error: " + res.status); return; }
+
+        const data   = await res.json();
+        const aiText = typeof data.answer === "string"
+          ? data.answer
+          : data.answer?.answer || "No response";
+
+        addMessage("AI", aiText);
+
+      } catch {
+        loader.remove();
+        addMessage("AI", "Network error — is the server running?");
+      } finally {
+        input.disabled = false;
+        btn.disabled   = false;
+        input.focus();
+      }
+    }
+
+    function addMessage(sender, text, thinking = false) {
+      const messages = document.getElementById("messages");
+      const isUser   = sender === "You";
+
+      if (typeof text === "object") text = JSON.stringify(text);
+
+      const row    = document.createElement("div");
+      row.className = `msg-row ${isUser ? "user" : "ai"}`;
+
+      const avatar = document.createElement("div");
+      avatar.className  = `avatar ${isUser ? "user" : "ai"}`;
+      avatar.textContent = isUser ? "You" : "AI";
+
+      const bubble = document.createElement("div");
+      bubble.className  = "bubble" + (thinking ? " thinking" : "");
+      bubble.innerText  = text;
+
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+      messages.appendChild(row);
+      messages.scrollTop = messages.scrollHeight;
+      return row;
+    }
+
+    function hideEmpty() {
+      const el = document.getElementById("empty-state");
+      if (el) el.remove();
+    }
+
+    // ── Upload personal doc ───────────────────────────────────────────────
+    async function uploadFile(input) {
+      if (!input.files.length) return;
+      const token    = localStorage.getItem("token");
+      const statusEl = document.getElementById("upload-status");
+
+      setUploadStatus("Uploading...", "inf");
+
+      const formData = new FormData();
+      formData.append("file", input.files[0]);
+
+      try {
+        const res  = await fetch(`${API}/documents/upload/personal`, {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token },
+          body: formData
+        });
+        const data = await res.json();
+        if (res.ok) {
+          uploadedContext = data.text || data.summary || JSON.stringify(data);
+          setUploadStatus(`Attached: ${input.files[0].name}`, "ok");
+        } else {
+          setUploadStatus(`Failed: ${data.detail ?? "Unknown error"}`, "err");
+        }
+      } catch {
+        setUploadStatus("Upload failed — server unreachable.", "err");
+      } finally {
+        input.value = "";
+        setTimeout(() => setUploadStatus("", ""), 4000);
+      }
+    }
+
+    function setUploadStatus(msg, cls) {
+      const el = document.getElementById("upload-status");
+      el.textContent = msg;
+      el.className   = cls;
+    }
+  </script>
+
+</body>
+</html>

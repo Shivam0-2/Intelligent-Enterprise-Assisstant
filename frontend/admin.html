@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Enterprise Assistant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="admin-page">
+
+  <header class="admin-topbar">
+    <div class="brand">
+      <div class="logo-icon">✦</div>
+      Enterprise Assistant
+      <span class="badge">Admin</span>
+    </div>
+    <button class="btn btn-danger" onclick="logout()">Sign out</button>
+  </header>
+
+  <div class="admin-body">
+    <div class="admin-card">
+
+      <div class="admin-card-header">
+        <h2>Upload Policy Document</h2>
+        <p>Upload a PDF to index it in the knowledge base. All employees will be able to query it through the chat interface.</p>
+      </div>
+
+      <!-- Drop zone -->
+      <div class="drop-zone" onclick="document.getElementById('policy-file').click()">
+        <div class="dz-icon">📄</div>
+        <p>Click to select a PDF file</p>
+        <span>Only .pdf files are supported</span>
+      </div>
+      <input type="file" id="policy-file" accept=".pdf" onchange="onFileSelected(this)" />
+
+      <div id="selected-file"></div>
+
+      <div id="upload-result"></div>
+
+      <button class="btn btn-accent" id="upload-btn" onclick="uploadPolicy()">
+        Upload &amp; Index Document
+      </button>
+
+    </div>
+  </div>
+
+  <script>
+    const API = "http://127.0.0.1:8000";
+
+    // Auth + role guard
+    window.onload = () => {
+      const token = localStorage.getItem("token");
+      const role  = localStorage.getItem("role");
+      if (!token)           window.location.href = "login.html";
+      if (role !== "admin") window.location.href = "index.html";
+    };
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      window.location.href = "login.html";
+    }
+
+    function onFileSelected(input) {
+      const label = document.getElementById("selected-file");
+      label.textContent = input.files.length ? `Selected: ${input.files[0].name}` : "";
+    }
+
+    async function uploadPolicy() {
+      const fileInput = document.getElementById("policy-file");
+      const resultEl  = document.getElementById("upload-result");
+      const btn       = document.getElementById("upload-btn");
+      const token     = localStorage.getItem("token");
+
+      if (!fileInput.files.length) {
+        showResult("Please select a PDF file first.", "err");
+        return;
+      }
+
+      btn.disabled = true;
+      showResult("Uploading and indexing... this may take a moment.", "inf");
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      try {
+        const res  = await fetch(`${API}/documents/upload/policy`, {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token },
+          body: formData
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          const chunks = data.total_chunks ?? "—";
+          showResult(`Document indexed successfully. Chunks created: ${chunks}`, "ok");
+          document.getElementById("selected-file").textContent = "";
+          fileInput.value = "";
+        } else {
+          showResult(`Upload failed: ${data.detail ?? "Unknown error"}`, "err");
+        }
+      } catch {
+        showResult("Upload failed — server unreachable.", "err");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function showResult(msg, type) {
+      const el = document.getElementById("upload-result");
+      el.textContent = msg;
+      el.className   = type;
+    }
+  </script>
+
+</body>
+</html>

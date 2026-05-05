@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     app_name: str = "Intelligent Enterprise Assistant"
     debug: bool = True
     secret_key: str
+    resend_api: str
 
     # Auth
     ALLOW_ANY_EMAIL: bool = True

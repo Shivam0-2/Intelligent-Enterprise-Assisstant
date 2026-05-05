@@ -1,14 +1,14 @@
+import resend
 import random
-import smtplib
-from email.mime.text import MIMEText
+
+from app.config import get_settings
+settings = get_settings()
+resend.api_key = settings.resend_api
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from jose import jwt
 from fastapi import HTTPException
 
-from app.config import get_settings
-
-settings = get_settings()
 
 # TEMP in-memory store (for now)
 otp_store = {}
@@ -52,24 +52,20 @@ class AuthService:
             "role": role
         }
 
-        message = MIMEText(f"Your OTP is: {otp}")
-        message["Subject"] = "Your OTP Code"
-        message["From"] = settings.EMAIL_USER
-        message["To"] = email
-
         try:
-            server = smtplib.SMTP("smtp.gmail.com", 587)
-            server.starttls()
-            server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
-            server.send_message(message)
-            server.quit()
+            resend.Emails.send({
+                "from": "onboarding@resend.dev",
+                "to": email,
+                "subject": "Your OTP Code",
+                "html": f"""
+                    <h2>Your OTP Code</h2>
+                    <p>Your OTP is: <strong>{otp}</strong></p>
+                    <p>This will expire in 10 minutes.</p>
+                """
+            })
         except Exception as e:
-            print("Email failed:", e)
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to send OTP email")
-
-        print(f"OTP for {email}: {otp}") 
+            print("Resend error:", str(e))
+            raise Exception("Failed to send OTP email")
 
 
     @staticmethod

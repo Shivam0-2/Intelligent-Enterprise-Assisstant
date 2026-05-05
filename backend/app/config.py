@@ -7,14 +7,13 @@ class Settings(BaseSettings):
     app_name: str = "Intelligent Enterprise Assistant"
     debug: bool = True
     secret_key: str
-    resend_api: str
+    brevo_api_key: str
 
     # Auth
     ALLOW_ANY_EMAIL: bool = True
 
     # Email
-    EMAIL_USER: str
-    EMAIL_PASSWORD: str
+    sender_email: str
 
     # Database
     database_url: str

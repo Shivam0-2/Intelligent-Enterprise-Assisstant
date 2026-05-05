@@ -1,9 +1,8 @@
-import resend
 import random
-
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 from app.config import get_settings
 settings = get_settings()
-resend.api_key = settings.resend_api
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from jose import jwt
@@ -52,20 +51,26 @@ class AuthService:
             "role": role
         }
 
+        configuration = sib_api_v3_sdk.Configuration()
+        configuration.api_key['api-key'] = settings.brevo_api_key
+
+        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+        email_data = sib_api_v3_sdk.SendSmtpEmail(
+            to=[{"email": email}], 
+            sender={"email": settings.sender_email},
+            subject="Your OTP Code",
+            html_content=f"""
+            <h2>Your OTP Code</h2>
+            <p>Your OTP is: <strong>{otp}</strong></p>
+            <p>This will expire in 5 minutes.</p>
+            """
+        )
+
         try:
-            resend.Emails.send({
-                "from": "onboarding@resend.dev",
-                "to": email,
-                "subject": "Your OTP Code",
-                "html": f"""
-                    <h2>Your OTP Code</h2>
-                    <p>Your OTP is: <strong>{otp}</strong></p>
-                    <p>This will expire in 10 minutes.</p>
-                """
-            })
-        except Exception as e:
-            print("Resend error:", str(e))
-            raise Exception("Failed to send OTP email")
+            api_instance.send_transac_email(email_data)
+        except ApiException as e:
+            print("Brevo:", str(e))
+            raise HTTPException(status_code=500, detail=f"Brevo error: {str(e)}")
 
 
     @staticmethod

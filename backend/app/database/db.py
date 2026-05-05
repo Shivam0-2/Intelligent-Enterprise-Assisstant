@@ -7,8 +7,7 @@ settings = get_settings()
 
 engine = create_engine(
     settings.database_url,
-    # Required for SQLite — allows multi-thread access
-    connect_args={"check_same_thread": False},
+    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

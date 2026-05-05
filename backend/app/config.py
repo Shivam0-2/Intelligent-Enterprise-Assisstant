@@ -4,33 +4,26 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # App
-    app_name: str = "Intelligent EnterpriseAssistant"
+    app_name: str = "Intelligent Enterprise Assistant"
     debug: bool = True
     secret_key: str
 
+    # Auth
     ALLOW_ANY_EMAIL: bool = True
+
+    # Email
     EMAIL_USER: str
     EMAIL_PASSWORD: str
 
-    hf_api_token: str | None = None
-    groq_api_key: str | None = None
-
-    class Config:
-        env_file = ".env"
-
     # Database
-    database_url: str = "sqlite:///./enterprise_assistant.db"
+    database_url: str
 
     # JWT
     jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
+    access_token_expire_minutes: int = 120
 
-    # Email / SMTP
-    smtp_host: str = "smtp.gmail.com"
-    smtp_port: int = 587
-    EMAIL_USER: str
-    EMAIL_PASSWORD: str
-    llm_model: str = "mistralai/Mistral-7B-Instruct-v0.1"
+    # AI
+    groq_api_key: str
 
     # Embeddings
     embedding_model: str = "sentence-transformers/all-mpnet-base-v2"
@@ -43,6 +36,5 @@ class Settings(BaseSettings):
 
 
 @lru_cache()
-def get_settings() -> Settings:
-    """Cache settings so .env is only read once."""
+def get_settings():
     return Settings()

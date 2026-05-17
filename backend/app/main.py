@@ -28,7 +28,7 @@ app = FastAPI(
 # ── CORS ─────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # Tighten this in production
+    allow_origins=["https://enterpriseassisstant.vercel.app"],        # Tighten this in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

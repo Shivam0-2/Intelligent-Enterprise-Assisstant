@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     groq_api_key: str
 
     # Embeddings
-    embedding_model: str = "sentence-transformers/all-mpnet-base-v2"
+    embedding_model: str
 
     # FAISS
     faiss_index_path: str = "./faiss_index"

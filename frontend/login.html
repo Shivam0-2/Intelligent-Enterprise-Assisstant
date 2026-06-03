@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Enterprise Assistant — Login</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body class="login-page">
 
   <div class="blob blob-1"></div>
@@ -20,7 +22,7 @@
 
     <div>
       <h2>Welcome back</h2>
-      
+
       <p class="subtitle">Sign in with your work email to continue.</p>
     </div>
 
@@ -46,7 +48,7 @@
   </div>
 
   <script>
-    const API = "https://enterprise-assisstant-production.up.railway.app";
+    const API = "http://127.0.0.1:8000";
 
     // Redirect if already logged in
     window.onload = () => {
@@ -59,7 +61,7 @@
     function setStatus(msg, type) {
       const el = document.getElementById("login-status");
       el.textContent = msg;
-      el.className   = `status-bar show ${type}`;
+      el.className = `status-bar show ${type}`;
     }
 
     async function requestOTP() {
@@ -78,8 +80,8 @@
         });
 
         const data = await res.json();
-        if (res.ok) {setStatus("OTP sent — check your inbox.", "ok");} 
-        else { setStatus(data.detail || "Failed to send OTP.", "err");}
+        if (res.ok) { setStatus("OTP sent — check your inbox.", "ok"); }
+        else { setStatus(data.detail || "Failed to send OTP.", "err"); }
       }
       catch {
         setStatus("Server unreachable.", "err");
@@ -90,7 +92,7 @@
 
     async function verifyOTP() {
       const email = document.getElementById("email").value.trim();
-      const otp   = document.getElementById("otp").value.trim();
+      const otp = document.getElementById("otp").value.trim();
       if (!email || !otp) { setStatus("Enter both email and OTP.", "err"); return; }
 
       setStatus("Verifying...", "inf");
@@ -106,7 +108,7 @@
         if (!res.ok) { setStatus(data.detail ?? "Invalid OTP.", "err"); return; }
 
         localStorage.setItem("token", data.access_token);
-        localStorage.setItem("role",  data.role);
+        localStorage.setItem("role", data.role);
 
         window.location.href = data.role === "admin" ? "admin.html" : "index.html";
 
@@ -117,4 +119,5 @@
   </script>
 
 </body>
+
 </html>

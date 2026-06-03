@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Enterprise Assistant</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body class="admin-page">
 
   <header class="admin-topbar">
@@ -22,7 +24,8 @@
 
       <div class="admin-card-header">
         <h2>Upload Policy Document</h2>
-        <p>Upload a PDF to index it in the knowledge base. All employees will be able to query it through the chat interface.</p>
+        <p>Upload a PDF to index it in the knowledge base. All employees will be able to query it through the chat
+          interface.</p>
       </div>
 
       <!-- Drop zone -->
@@ -45,13 +48,13 @@
   </div>
 
   <script>
-    const API = "https://enterprise-assisstant-production.up.railway.app";
+    const API = "http://127.0.0.1:8000";
 
     // Auth + role guard
     window.onload = () => {
       const token = localStorage.getItem("token");
-      const role  = localStorage.getItem("role");
-      if (!token)           window.location.href = "login.html";
+      const role = localStorage.getItem("role");
+      if (!token) window.location.href = "login.html";
       if (role !== "admin") window.location.href = "index.html";
     };
 
@@ -68,9 +71,9 @@
 
     async function uploadPolicy() {
       const fileInput = document.getElementById("policy-file");
-      const resultEl  = document.getElementById("upload-result");
-      const btn       = document.getElementById("upload-btn");
-      const token     = localStorage.getItem("token");
+      const resultEl = document.getElementById("upload-result");
+      const btn = document.getElementById("upload-btn");
+      const token = localStorage.getItem("token");
 
       if (!fileInput.files.length) {
         showResult("Please select a PDF file first.", "err");
@@ -84,7 +87,7 @@
       formData.append("file", fileInput.files[0]);
 
       try {
-        const res  = await fetch(`${API}/documents/upload/policy`, {
+        const res = await fetch(`${API}/documents/upload/policy`, {
           method: "POST",
           headers: { "Authorization": "Bearer " + token },
           body: formData
@@ -109,9 +112,10 @@
     function showResult(msg, type) {
       const el = document.getElementById("upload-result");
       el.textContent = msg;
-      el.className   = type;
+      el.className = type;
     }
   </script>
 
 </body>
+
 </html>
